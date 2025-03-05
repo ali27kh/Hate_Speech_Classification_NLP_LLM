@@ -7,3 +7,7 @@ keras
 seaborn
 scikit-learn
 torch
+sentencepiece 
+nltk
+spacy
+nlpaug
