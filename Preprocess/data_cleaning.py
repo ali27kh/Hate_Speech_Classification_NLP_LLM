@@ -262,11 +262,16 @@ class DataCleaning:
         text = DataCleaning.remove_spaces_and_newlines(text)  # Remove spaces, tabs, and newlines
         text = DataCleaning.remove_words_with_numbers(text)  # Remove words with numbers
         text = DataCleaning.remove_punctuation(text)  # Remove punctuation
-        # text = DataCleaning.detect_oov_words(text)  # Remove OOV words (updated function)
+        # text = DataCleaning.detect_oov_words(text)  # Remove OOV words 
         text = DataCleaning.remove_unnecessary_spaces(text)  # Remove spaces
-        # text = DataCleaning.correct_grammar(text)  # correct grammar
+        text = DataCleaning.correct_grammar(text)  # correct grammar
 
-
-        
-        
         return text
+
+    @staticmethod
+    def track_progress(text, i):
+        # Print the current index to track progress
+        print(f"Processing row {i}")
+        # Preprocess the text
+        return DataCleaning.preprocess_text(text)
+
