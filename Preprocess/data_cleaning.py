@@ -1,8 +1,59 @@
 import re
 import pandas as pd
 import string
+import nltk
+from nltk.corpus import words
+import language_tool_python
 
+# Download the words corpus if not already downloaded
+try:
+    nltk.data.find('corpora/words')
+except LookupError:
+    nltk.download('words')
+
+tool = language_tool_python.LanguageTool('en-US', remote_server='https://api.languagetool.org')
 class DataCleaning:
+    # Dictionary of common abbreviations
+    ABBREVIATIONS = {
+        "dont": "do not",
+        "cant": "cannot",
+        "wont": "will not",
+        "ive": "i have",
+        "im": "i am",
+        "id": "i would",
+        "ill": "i will",
+        "yall": "you all",
+        "its": "it is",
+        "hes": "he is",
+        "shes": "she is",
+        "theyre": "they are",
+        "whats": "what is",
+        "wheres": "where is",
+        "theres": "there is",
+        "didnt": "did not",
+        "isnt": "is not",
+        "arent": "are not",
+        "wasnt": "was not",
+        "werent": "were not",
+        "mr": "mister",
+        "mrs": "missus",
+        "ms": "miss",
+        "dr": "doctor",
+        "prof": "professor",
+        "approx": "approximately",
+        "etc": "et cetera",
+        "vs": "versus",
+        "dept": "department",
+        "govt": "government",
+        "info": "information",
+        "no": "number",
+        "tel": "telephone",
+        "u": "you",
+        "thats": "that's",
+        "ur": "you're"
+    }
+
+
     @staticmethod
     def clean_class_column(df: pd.DataFrame, column_name: str) -> pd.DataFrame:
         """
@@ -95,7 +146,101 @@ class DataCleaning:
     def remove_user_mentions(text):
         # Regular expression to remove @user mentions
         return re.sub(r'@\w+', '', text)
-
+    
+    @staticmethod
+    def expand_abbreviations(text):
+        """
+        Expands common abbreviations in the text to their full forms.
+        
+        Args:
+            text (str): Input text containing abbreviations
+            
+        Returns:
+            str: Text with abbreviations expanded
+        """
+        # Split text into words
+        words = text.split()
+        
+        # Replace abbreviations with their full forms
+        expanded_words = [DataCleaning.ABBREVIATIONS.get(word.lower(), word) for word in words]
+        
+        # Join words back together
+        return ' '.join(expanded_words)
+    
+    @staticmethod
+    def display_oov_words(text):
+        """
+        Detects out-of-vocabulary words in a given text using NLTK's word corpus.
+        
+        Args:
+        text (str): Input text to analyze
+            
+        Returns:
+        dict: Contains original text, OOV words found, and vocabulary stats
+        """
+        # Convert NLTK words to a set for faster lookup
+        vocabulary = set(words.words())
+            
+        # Convert text to lowercase and split into words
+        # Remove punctuation and split by whitespace
+        cleaned_text = re.sub(r'[^\w\s]', '', text.lower())
+        input_words = set(cleaned_text.split())
+            
+        # Find words not in vocabulary
+        oov_words = [word for word in input_words if word not in vocabulary]
+            
+        # Prepare results
+        result = {
+            'oov_words': oov_words,
+            'oov_count': len(oov_words),
+        }
+            
+        return result
+    
+    @staticmethod
+    def correct_grammar(text):
+        """
+        Corrects grammatical errors in the text using language_tool_python.
+        
+        Args:
+            text (str): Input text to correct
+            
+        Returns:
+            str: Grammatically corrected text
+        """
+        try:
+            # Use the language tool to correct the text
+            corrected_text = tool.correct(text)
+            return corrected_text
+        except Exception as e:
+            print(f"Error in grammar correction: {e}")
+            return text  # Return original text if correction fails
+    
+    
+    @staticmethod
+    def detect_oov_words(text):
+        """
+        Removes out-of-vocabulary words from the given text using NLTK's word corpus.
+        
+        Args:
+            text (str): Input text to clean
+            
+        Returns:
+            str: Text with OOV words removed
+        """
+        # Convert NLTK words to a set for faster lookup
+        vocabulary = set(words.words())
+        
+        # Convert text to lowercase and split into words
+        cleaned_text = re.sub(r'[^\w\s]', '', text.lower())
+        input_words = cleaned_text.split()
+        
+        # Keep only words that are in vocabulary
+        cleaned_words = [word for word in input_words if word in vocabulary]
+        
+        # Join the words back together with spaces
+        return ' '.join(cleaned_words)
+    
 
 
     @staticmethod
@@ -113,9 +258,15 @@ class DataCleaning:
         text = DataCleaning.remove_emojis(text)  # Remove emojis
         text = DataCleaning.remove_square_brackets(text)  # Remove text inside square brackets
         text = DataCleaning.remove_hashtags(text)  # Remove hashtags
+        text = DataCleaning.expand_abbreviations(text)  # Correct abbreviation 
         text = DataCleaning.remove_spaces_and_newlines(text)  # Remove spaces, tabs, and newlines
         text = DataCleaning.remove_words_with_numbers(text)  # Remove words with numbers
         text = DataCleaning.remove_punctuation(text)  # Remove punctuation
+        # text = DataCleaning.detect_oov_words(text)  # Remove OOV words (updated function)
         text = DataCleaning.remove_unnecessary_spaces(text)  # Remove spaces
+        # text = DataCleaning.correct_grammar(text)  # correct grammar
+
+
+        
         
         return text

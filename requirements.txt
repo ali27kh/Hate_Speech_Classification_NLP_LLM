@@ -10,4 +10,10 @@ torch
 sentencepiece 
 nltk
 spacy
-nlpaug
+language_tool_python
+plotly
+nbformat
+wordcloud
+palettable
+textblob
+cufflinks
