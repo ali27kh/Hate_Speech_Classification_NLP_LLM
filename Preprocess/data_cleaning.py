@@ -268,10 +268,4 @@ class DataCleaning:
 
         return text
 
-    @staticmethod
-    def track_progress(text, i):
-        # Print the current index to track progress
-        print(f"Processing row {i}")
-        # Preprocess the text
-        return DataCleaning.preprocess_text(text)
 

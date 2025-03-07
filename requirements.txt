@@ -17,3 +17,6 @@ wordcloud
 palettable
 textblob
 cufflinks
+lime
+shap
+tf-keras
