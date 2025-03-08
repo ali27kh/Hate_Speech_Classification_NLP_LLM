@@ -1,7 +1,9 @@
 import numpy as np
 import torch
 from sklearn.base import BaseEstimator
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 class HardVotingClassifier(BaseEstimator):
     def __init__(self, svm_model, knn_model, lstm_model, cnn_model, xgboost_model, lstm_threshold=0.5):
@@ -13,7 +15,7 @@ class HardVotingClassifier(BaseEstimator):
         self.lstm_threshold = lstm_threshold
 
     def fit(self, X, y):
-        # This method is for compatibility with sklearn's model selection tools, if needed
+        # This method is for compatibility with sklearn's model selection tools
         pass
 
     def predict(self, X_val, X_val_lstm, val_inputs_tensor):
@@ -40,3 +42,23 @@ class HardVotingClassifier(BaseEstimator):
         final_preds = np.apply_along_axis(lambda x: np.bincount(x).argmax(), axis=0, arr=all_preds)
 
         return final_preds
+    
+    def evaluate(self, X_val, X_val_lstm, val_inputs_tensor, y_val):
+        # Get predictions using the hard voting model
+        y_pred = self.predict(X_val, X_val_lstm, val_inputs_tensor)
+
+        # Classification report
+        print("Classification Report:")
+        print(classification_report(y_val, y_pred))
+
+        # Confusion matrix
+        conf_matrix = confusion_matrix(y_val, y_pred)
+        print("\nConfusion Matrix:")
+
+        # Plot the confusion matrix
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=np.unique(y_val), yticklabels=np.unique(y_val))
+        plt.title('Confusion Matrix')
+        plt.xlabel('Predicted')
+        plt.ylabel('Actual')
+        plt.show()
