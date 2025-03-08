@@ -20,3 +20,6 @@ cufflinks
 lime
 shap
 tf-keras
+imblearn
+faiss-cpu
+accelerate
