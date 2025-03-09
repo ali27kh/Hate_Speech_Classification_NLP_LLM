@@ -1,0 +1,10 @@
+numpy 
+Django
+tensorflow
+transformers
+torch
+joblib
+scikit-learn
+language_tool_python
+nltk
+pandas

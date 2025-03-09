@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hate Speech Detector</title>
+    <!-- Include Google Material icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Include jQuery -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <style>
+        /* Global reset and style */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url('/static/img/background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            position: relative;
+        }
+
+        /* Overlay for background image opacity */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* Adjustable opacity here */
+            z-index: -1;
+        }
+
+        /* Main container */
+        .container {
+            max-width: 700px;
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Styled card */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            backdrop-filter: blur(5px); /* Blur effect for a modern look */
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Form */
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .form-group {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .form-label {
+            font-size: 1rem;
+            color: #34495e;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 20px;
+            border: 2px solid #dfe6e9;
+            border-radius: 12px;
+            font-size: 1;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-control:focus {
+            border-color: #6c5ce7;
+            box-shadow: 0 0 10px rgba(108, 92, 231, 0.3);
+            outline: none;
+            background: #fff;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            border: none;
+            padding: 14px 40px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a4bc6, #8c7ce6);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+        }
+
+        /* Prediction result */
+        .prediction-result {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .result-title {
+            font-size: 1.1rem;
+            color: #2d3436;
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+
+        .prediction-text {
+            font-size: 1.1rem;
+            font-weight: 700;
+            padding: 12px 25px;
+            border-radius: 12px;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .positive {
+            background: #00b894;
+            color: #fff;
+            border: 2px solid #55efc4;
+        }
+
+        .negative {
+            background: #d63031;
+            color: #fff;
+            border: 2px solid #ff7675;
+        }
+
+        .svm-result {
+            background: #f39c12;
+            color: #fff;
+            border: 2px solid #fab1a0;
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .card {
+                padding: 20px;
+            }
+            .card-title {
+                font-size: 1.1rem;
+            }
+            .form-control {
+                font-size: 0.9rem;
+                padding: 12px 15px;
+            }
+            .btn-primary {
+                font-size: 1rem;
+                padding: 12px 30px;
+            }
+        }
+        .input-text {
+            background: #dfe6e9;
+            color: #2d3436;
+            border: 2px solid #b2bec3;
+            font-size: 1.3rem;
+            padding: 10px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h3 class="card-title">Hate Speech Detector</h3>
+            <form method="POST" id="myFormId" name="contactForm" class="form-container">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label" for="text">Enter your text</label>
+                    <input class="form-control" type="text" name="text" id="text" placeholder="Type here..." required>
+                </div>
+                <button id="submitForm" type="submit" class="btn-primary">Submit</button>
+            </form>
+
+            <!-- Display predictions and entered text -->
+            {% if lstm_prediction %}
+                <div class="prediction-result">
+                    <h4 class="result-title">Initial user text:</h4>
+                    <p class="prediction-text input-text">
+                        {{ user_text }}
+                    </p>
+                    <h4 class="result-title">Preprocessed user text:</h4>
+                    <p class="prediction-text input-text">
+                        {{ input_text }}
+                    </p>
+                    <h4 class="result-title">Model result:</h4>
+                    <p class="prediction-text {% if lstm_prediction == 'Positive' %}positive{% else %}negative{% endif %}">
+                        {{ lstm_prediction }}
+                    </p>
+                    {% if svm_prediction %}
+                        <h4 class="result-title">Type of hate speech:</h4>
+                        <p class="prediction-text svm-result">
+                            {{ svm_prediction }}
+                        </p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

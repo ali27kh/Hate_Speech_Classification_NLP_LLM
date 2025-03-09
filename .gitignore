@@ -1,5 +1,3 @@
 # Environnements virtuels
 venv/
-
-# Base de données
-# Data/
+./interface/venv
