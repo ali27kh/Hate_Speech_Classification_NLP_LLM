@@ -61,33 +61,97 @@ for comment in df['cleaned_comment']:
 Train multiple classification models; LSTM is selected as the best.
 
 ```python
-# Models in 'Models' folder
-# Example LSTM
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
-
-model = Sequential()
-model.add(LSTM(128, input_shape=(timesteps, features)))
-model.add(Dense(1, activation='sigmoid'))
-model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-model.fit(X_train, y_train, epochs=10)
+class LSTMClassifier:
+    def __init__(self, tokenizer, embedding_dim=768, lstm_units=300, dropout_rate=0.3):
+        # Initialize model parameters and tokenizer
+        self.tokenizer = tokenizer
+        self.embedding_dim = embedding_dim
+        self.lstm_units = lstm_units
+        self.dropout_rate = dropout_rate
+        self.max_length = tokenizer.model_max_length
+        self.model = self._build_model()
+        
+    def _build_model(self):
+        # Build a sequential model with bidirectional LSTM and dense layers
+        model = Sequential([
+            Bidirectional(LSTM(units=self.lstm_units, input_shape=(None, self.embedding_dim), return_sequences=True)),
+            BatchNormalization(),
+            Dropout(self.dropout_rate),
+            Bidirectional(LSTM(units=self.lstm_units // 2, return_sequences=False)),
+            BatchNormalization(),
+            Dropout(self.dropout_rate),
+            Dense(256, activation='relu'),
+            BatchNormalization(),
+            Dropout(self.dropout_rate),
+            Dense(128, activation='relu'),
+            BatchNormalization(),
+            Dropout(self.dropout_rate // 2),
+            Dense(1, activation='sigmoid')
+        ])
+        
+        # Compile model with Adam optimizer and binary crossentropy loss
+        model.compile(
+            optimizer=Adam(learning_rate=0.0001, beta_1=0.9, beta_2=0.999),
+            loss='binary_crossentropy',
+            metrics=['accuracy', 'Precision', 'Recall']
+        )
+        return model
+    
+    def train_model(self, trainset, testset, epochs=50, batch_size=32, validation_split=0.2):
+        # Convert DataFrame embeddings and labels to TensorFlow tensors
+        X_train = tf.constant(trainset["comment_embedding"].tolist(), dtype=tf.float32)
+        y_train = tf.constant(trainset["label"].tolist(), dtype=tf.int32)
+        X_test = tf.constant(testset["comment_embedding"].tolist(), dtype=tf.float32)
+        y_test = tf.constant(testset["label"].tolist(), dtype=tf.int32)
+        
+        # Adjust input dimensions for LSTM
+        if len(X_train.shape) == 4:
+            X_train = tf.squeeze(X_train, axis=2)
+            X_test = tf.squeeze(X_test, axis=2)
+        elif len(X_train.shape) == 2:
+            X_train = tf.expand_dims(X_train, axis=1)
+            X_test = tf.expand_dims(X_test, axis=1)
+            
+        # Define callbacks for early stopping and learning rate reduction
+        early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, mode='min')
+        reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=3, min_lr=1e-6, mode='min')
+        
+        # Train the model with validation data and callbacks
+        history = self.model.fit(
+            X_train, y_train,
+            epochs=epochs,
+            batch_size=batch_size,
+            validation_split=validation_split,
+            validation_data=(X_test, y_test),
+            callbacks=[early_stopping, reduce_lr],
+            verbose=1
+        )
 ```
 
 ### **4. Model Testing with Django Interface**
 Test the model via a Django web app, processing input text and classifying hate speech.
 
 ```python
-# In Django views.py
-from django.shortcuts import render
-from .models import HateSpeechModel
+import os
+import sys
 
-def predict_hate_speech(request):
-    if request.method == 'POST':
-        text = request.POST['text']
-        cleaned_text = preprocess_text(text)
-        prediction = model.predict(cleaned_text)
-        return render(request, 'result.html', {'prediction': prediction})
-    return render(request, 'form.html')
+
+def main():
+    """Run administrative tasks."""
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
+    try:
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError(
+            "Couldn't import Django. Are you sure it's installed and "
+            "available on your PYTHONPATH environment variable? Did you "
+            "forget to activate a virtual environment?"
+        ) from exc
+    execute_from_command_line(sys.argv)
+
+
+if __name__ == '__main__':
+    main()
 ```
 
 ---
