@@ -7,7 +7,7 @@ This project detects hate speech in text using **NLP techniques** and **deep lea
 
 ## 📂 Dataset
 - **Custom Dataset**: Collected text data with labels (hate speech or not), stored in a local CSV file.
-- Input: Raw text with possible errors; Output: Binary classification (0/1).
+- Input: Raw text with possible errors; Output: Binary classification (0/1) and the type of hate speech.
 
 ---
 
