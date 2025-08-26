@@ -211,13 +211,13 @@ pip install pandas numpy transformers tensorflow matplotlib keras seaborn scikit
 - LSTM excels in capturing sequential patterns in text for hate speech detection.
 - Django interface enables real-time testing with preprocessing.
 
-## Alternative Approaches
+## NLP Approaches
 - **Falcon LLM**: A large language model for generating and classifying text, effective for nuanced hate speech detection.
 - **DeBERTa**: Decoder-only BERT variant optimized for understanding text nuances in classification tasks.
 - **BERT**: Bidirectional Encoder Representations from Transformers, pre-trained for contextual text understanding.
 - **RoBERTa**: Robustly optimized BERT approach, improving performance on downstream NLP tasks like classification.
 
-See `other_approaches/` for test details.
+See `other_approaches/` for details.
 
 ---
 
